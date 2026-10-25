@@ -12,7 +12,12 @@ import {
 } from '@pages';
 import { Preloader } from '@ui';
 import { useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
 
 import { fetchIngredients } from '../../services/ingredientsSlice';
 import { useDispatch, useSelector } from '../../services/store';
@@ -25,9 +30,13 @@ import styles from './app.module.css';
 
 const App = (): React.JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const { isLoading, error } = useSelector((state) => state.ingredients);
+
+  // Получаем страницу, с которой пользователь открыл модальное окно
+  const background = location.state?.background;
 
   useEffect(() => {
     void dispatch(fetchIngredients());
@@ -42,7 +51,8 @@ const App = (): React.JSX.Element => {
     <div className={styles.app}>
       <AppHeader />
 
-      <Routes>
+      {/* Основные маршруты */}
+      <Routes location={background || location}>
         <Route
           path="/"
           element={
@@ -58,51 +68,93 @@ const App = (): React.JSX.Element => {
 
         <Route path="/feed" element={<Feed />} />
 
+        {/* Прямая ссылка на заказ из ленты */}
         <Route
           path="/feed/:number"
           element={
-            <Modal title="Информация о заказе" onClose={closeModal}>
+            <div className={styles.detailPageWrap}>
+              <h2 className={styles.detailHeader}>
+                Информация о заказе
+              </h2>
               <OrderInfo />
-            </Modal>
+            </div>
           }
         />
 
+        {/* Прямая ссылка на ингредиент */}
         <Route
           path="/ingredients/:id"
           element={
-            <Modal title="Детали ингредиента" onClose={closeModal}>
+            <div className={styles.detailPageWrap}>
+              <h2 className={styles.detailHeader}>
+                Детали ингредиента
+              </h2>
               <IngredientDetails />
-            </Modal>
+            </div>
           }
         />
 
         <Route element={<ProtectedRoute isGuest />}>
           <Route path="/login" element={<Login />} />
-
           <Route path="/register" element={<Register />} />
-
           <Route path="/forgot-password" element={<ForgotPassword />} />
-
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
-
           <Route path="/profile/orders" element={<ProfileOrders />} />
 
+          {/* Прямая ссылка на заказ из истории */}
           <Route
             path="/profile/orders/:number"
             element={
-              <Modal title="Информация о заказе" onClose={closeModal}>
+              <div className={styles.detailPageWrap}>
+                <h2 className={styles.detailHeader}>
+                  Информация о заказе
+                </h2>
                 <OrderInfo />
-              </Modal>
+              </div>
             }
           />
         </Route>
 
         <Route path="*" element={<NotFound404 />} />
       </Routes>
+
+      {/* Модальные окна поверх предыдущей страницы */}
+      {background && (
+        <Routes>
+          <Route
+            path="/ingredients/:id"
+            element={
+              <Modal title="Детали ингредиента" onClose={closeModal}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+
+          <Route
+            path="/feed/:number"
+            element={
+              <Modal title="Информация о заказе" onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/profile/orders/:number"
+              element={
+                <Modal title="Информация о заказе" onClose={closeModal}>
+                  <OrderInfo />
+                </Modal>
+              }
+            />
+          </Route>
+        </Routes>
+      )}
     </div>
   );
 };
