@@ -39,7 +39,18 @@ export const Profile = (): React.JSX.Element => {
         }),
       };
 
-      void dispatch(updateUser(data));
+      void dispatch(updateUser(data))
+        .unwrap()
+        .then((updatedUser) => {
+          setFormValue({
+            name: updatedUser.name,
+            email: updatedUser.email,
+            password: '',
+          });
+        })
+        .catch((error) => {
+          console.error('Ошибка обновления профиля:', error);
+        });
     }
   };
 

@@ -1,6 +1,6 @@
 import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 import { fetchFeeds } from '../../services/feedSlice';
 import { useDispatch, useSelector } from '../../services/store';
@@ -10,13 +10,13 @@ export const Feed = (): React.JSX.Element => {
 
   const { orders, isLoading, error } = useSelector((state) => state.feed);
 
-  const handleGetFeeds = (): void => {
+  const handleGetFeeds = useCallback((): void => {
     void dispatch(fetchFeeds());
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     handleGetFeeds();
-  }, [dispatch]);
+  }, [handleGetFeeds]);
 
   if (isLoading && !orders.length) {
     return <Preloader />;
