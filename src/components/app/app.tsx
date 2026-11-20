@@ -12,12 +12,7 @@ import {
 } from '@pages';
 import { Preloader } from '@ui';
 import { useEffect } from 'react';
-import {
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-} from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 import { fetchIngredients } from '../../services/ingredientsSlice';
 import { useDispatch, useSelector } from '../../services/store';
@@ -28,6 +23,16 @@ import '../../index.css';
 
 import styles from './app.module.css';
 
+type TLocationState = {
+  background?: {
+    pathname: string;
+    search?: string;
+    hash?: string;
+    state?: unknown;
+    key?: string;
+  };
+};
+
 const App = (): React.JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,8 +40,9 @@ const App = (): React.JSX.Element => {
 
   const { isLoading, error } = useSelector((state) => state.ingredients);
 
-  // Получаем страницу, с которой пользователь открыл модальное окно
-  const background = location.state?.background;
+  // Получаем страницу, с которой открыли модальное окно
+  const locationState = location.state as TLocationState | null;
+  const background = locationState?.background;
 
   useEffect(() => {
     void dispatch(fetchIngredients());
@@ -52,7 +58,7 @@ const App = (): React.JSX.Element => {
       <AppHeader />
 
       {/* Основные маршруты */}
-      <Routes location={background || location}>
+      <Routes location={background ?? location}>
         <Route
           path="/"
           element={
@@ -73,9 +79,7 @@ const App = (): React.JSX.Element => {
           path="/feed/:number"
           element={
             <div className={styles.detailPageWrap}>
-              <h2 className={styles.detailHeader}>
-                Информация о заказе
-              </h2>
+              <h2 className={styles.detailHeader}>Информация о заказе</h2>
               <OrderInfo />
             </div>
           }
@@ -86,9 +90,7 @@ const App = (): React.JSX.Element => {
           path="/ingredients/:id"
           element={
             <div className={styles.detailPageWrap}>
-              <h2 className={styles.detailHeader}>
-                Детали ингредиента
-              </h2>
+              <h2 className={styles.detailHeader}>Детали ингредиента</h2>
               <IngredientDetails />
             </div>
           }
@@ -110,9 +112,7 @@ const App = (): React.JSX.Element => {
             path="/profile/orders/:number"
             element={
               <div className={styles.detailPageWrap}>
-                <h2 className={styles.detailHeader}>
-                  Информация о заказе
-                </h2>
+                <h2 className={styles.detailHeader}>Информация о заказе</h2>
                 <OrderInfo />
               </div>
             }

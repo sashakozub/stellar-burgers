@@ -5,6 +5,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from '../../services/store';
 import { loginUser } from '../../services/userSlice';
 
+type TLoginLocationState = {
+  from?: {
+    pathname: string;
+  };
+};
+
 export const Login = (): React.JSX.Element => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,18 +24,24 @@ export const Login = (): React.JSX.Element => {
   const handleSubmit = (e: SyntheticEvent): void => {
     e.preventDefault();
 
-    dispatch(loginUser({ email, password }))
+    void dispatch(loginUser({ email, password }))
       .unwrap()
       .then(() => {
-        const from = location.state?.from;
-        navigate(from ? from.pathname : '/', { replace: true });
+        const locationState = location.state as TLoginLocationState | null;
+        const from = locationState?.from;
+
+        void navigate(from?.pathname ?? '/', {
+          replace: true,
+        });
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        console.error('Ошибка авторизации:', error);
+      });
   };
 
   return (
     <LoginUI
-      errorText={error || ''}
+      errorText={error ?? ''}
       email={email}
       setEmail={setEmail}
       password={password}
