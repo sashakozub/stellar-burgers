@@ -1,69 +1,162 @@
-import { AppHeader } from '@components';
-import { ConstructorPage } from '@pages';
+import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
+import {
+  ConstructorPage,
+  Feed,
+  Login,
+  Register,
+  ForgotPassword,
+  ResetPassword,
+  Profile,
+  ProfileOrders,
+  NotFound404,
+} from '@pages';
 import { Preloader } from '@ui';
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
 
-import type { AppContentProps } from './type';
-import type { TIngredient } from '@utils-types';
+import { fetchIngredients } from '../../services/ingredientsSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import { checkUserAuth } from '../../services/userSlice';
+import { ProtectedRoute } from '../protected-route/protected-route';
 
 import '../../index.css';
 
 import styles from './app.module.css';
 
 const App = (): React.JSX.Element => {
-  const ingredients: TIngredient[] = [];
-  const isIngredientsLoading = false;
-  const ingredientsError = null;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+
+  const { isLoading, error } = useSelector((state) => state.ingredients);
+
+  // Получаем страницу, с которой пользователь открыл модальное окно
+  const background = location.state?.background;
+
+  useEffect(() => {
+    void dispatch(fetchIngredients());
+    void dispatch(checkUserAuth());
+  }, [dispatch]);
+
+  const closeModal = (): void => {
+    void navigate(-1);
+  };
 
   return (
     <div className={styles.app}>
       <AppHeader />
-      <AppContent
-        ingredients={ingredients}
-        isLoading={isIngredientsLoading}
-        error={ingredientsError}
-      />
+
+      {/* Основные маршруты */}
+      <Routes location={background || location}>
+        <Route
+          path="/"
+          element={
+            isLoading ? (
+              <Preloader />
+            ) : error ? (
+              <p>Ошибка загрузки ингредиентов: {error}</p>
+            ) : (
+              <ConstructorPage />
+            )
+          }
+        />
+
+        <Route path="/feed" element={<Feed />} />
+
+        {/* Прямая ссылка на заказ из ленты */}
+        <Route
+          path="/feed/:number"
+          element={
+            <div className={styles.detailPageWrap}>
+              <h2 className={styles.detailHeader}>
+                Информация о заказе
+              </h2>
+              <OrderInfo />
+            </div>
+          }
+        />
+
+        {/* Прямая ссылка на ингредиент */}
+        <Route
+          path="/ingredients/:id"
+          element={
+            <div className={styles.detailPageWrap}>
+              <h2 className={styles.detailHeader}>
+                Детали ингредиента
+              </h2>
+              <IngredientDetails />
+            </div>
+          }
+        />
+
+        <Route element={<ProtectedRoute isGuest />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/orders" element={<ProfileOrders />} />
+
+          {/* Прямая ссылка на заказ из истории */}
+          <Route
+            path="/profile/orders/:number"
+            element={
+              <div className={styles.detailPageWrap}>
+                <h2 className={styles.detailHeader}>
+                  Информация о заказе
+                </h2>
+                <OrderInfo />
+              </div>
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<NotFound404 />} />
+      </Routes>
+
+      {/* Модальные окна поверх предыдущей страницы */}
+      {background && (
+        <Routes>
+          <Route
+            path="/ingredients/:id"
+            element={
+              <Modal title="Детали ингредиента" onClose={closeModal}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+
+          <Route
+            path="/feed/:number"
+            element={
+              <Modal title="Информация о заказе" onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/profile/orders/:number"
+              element={
+                <Modal title="Информация о заказе" onClose={closeModal}>
+                  <OrderInfo />
+                </Modal>
+              }
+            />
+          </Route>
+        </Routes>
+      )}
     </div>
   );
 };
 
 export default App;
-
-/* Маршруты показываются только когда ингредиенты загружены: без них не
-   отрисовать ни конструктор, ни состав заказа. */
-const AppContent = ({
-  ingredients,
-  isLoading,
-  error,
-}: AppContentProps): React.JSX.Element => {
-  if (isLoading) {
-    return <Preloader />;
-  }
-
-  if (error) {
-    return (
-      <p className={`${styles.message} text text_type_main-medium`}>
-        Не удалось загрузить ингредиенты
-        {error.message ? `: ${error.message}` : '.'}
-      </p>
-    );
-  }
-
-  if (!ingredients.length) {
-    return (
-      <p className={`${styles.message} text text_type_main-medium`}>Нет ингредиентов</p>
-    );
-  }
-
-  return <RouteComponent />;
-};
-
-const RouteComponent = (): React.JSX.Element => {
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<ConstructorPage />} />
-      </Routes>
-    </>
-  );
-};
