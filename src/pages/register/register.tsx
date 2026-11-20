@@ -18,7 +18,7 @@ export const Register = (): React.JSX.Element => {
   const handleSubmit = (e: SyntheticEvent): void => {
     e.preventDefault();
 
-    dispatch(
+    void dispatch(
       registerUser({
         name: userName,
         email,
@@ -27,14 +27,16 @@ export const Register = (): React.JSX.Element => {
     )
       .unwrap()
       .then(() => {
-        navigate('/');
+        void navigate('/');
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        console.error('Ошибка регистрации:', error);
+      });
   };
 
   return (
     <RegisterUI
-      errorText={error || ''}
+      errorText={error ?? ''}
       email={email}
       userName={userName}
       password={password}

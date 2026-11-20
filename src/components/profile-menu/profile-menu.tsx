@@ -11,13 +11,13 @@ export const ProfileMenu = (): React.JSX.Element => {
   const navigate = useNavigate();
 
   const handleLogout = (): void => {
-    dispatch(logoutUser())
+    void dispatch(logoutUser())
       .unwrap()
       .then(() => {
-        navigate('/login');
+        void navigate('/login');
       })
       .catch(() => {
-        navigate('/login');
+        void navigate('/login');
       });
   };
 

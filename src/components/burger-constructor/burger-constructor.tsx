@@ -25,7 +25,7 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
     if (!isAuthChecked) return;
 
     if (!user) {
-      navigate('/login', {
+      void navigate('/login', {
         state: { from: location },
       });
       return;
@@ -37,12 +37,14 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
       constructorItems.bun._id,
     ];
 
-    dispatch(createOrder(ingredients))
+    void dispatch(createOrder(ingredients))
       .unwrap()
       .then(() => {
         dispatch(clearConstructor());
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        console.error('Ошибка оформления заказа:', error);
+      });
   };
 
   const closeOrderModal = (): void => {
